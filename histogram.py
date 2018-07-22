@@ -1,32 +1,44 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import cv2 as editor
-import hist
 import numpy as np
 
-# import matplotlib.pyplot as plotter
-# import pyplotter as plotter
-# import matplotlib.pyplot as plt
-extreme_values = [0, 0]
+
+def calc_histogram(image):
+    """Return the histogram from a image."""
+    histogram = [0] * 256
+    print(image)
+    for row in range(image.shape[0]):
+        for column in range(image.shape[1]):
+            histogram[image[row, column]
+                      ] = histogram[image[row, column]] + 1
+    return histogram
 
 
-# def accumulate(histogram):
-#     i = 0
-#     accumulated[i] = histogram[i]
-#     while i < ((len(histogram)) - 1):
-#         acumulated[] =
+def accumulate(histogram):
+    """Return a accumulated histogram."""
+    for i in range(1, len(histogram)):
+        histogram[i] = histogram[i-1] + histogram[i]
+    return histogram
 
 
-def convert(vis):
-    """Convert a image to grayscale."""
-    vis2 = editor.cvtColor(vis, editor.COLOR_GRAY2BGR)
-    return vis2
+def equalize_hist(histogram, image):
+    """Equalizes the histogram."""
+    # image = editor.imread(str(image_path), 0)
+    interval = (0, 255)
+    for i in range(1, len(histogram)):
+        print(' histogram[i] ',
+              histogram[i],
+              ' image.shape[0]*image.shape[1] ',
+              image.shape[0]*image.shape[1],
+              ' div ',
+              float(float(histogram[i])/float(image.shape[0]*image.shape[1])))
 
-
-def is_extreme(number):
-    """Update the min or max values according to the given number."""
-    if number > extreme_values[1]:
-        extreme_values[1] = number
-    if number < extreme_values[0]:
-        extreme_values[0] = number
+        histogram[i] = int(
+            round((interval[1]-interval[0]) *
+                  (float(histogram[i]) / float(histogram[-1])))
+            )
+        return histogram
 
 
 def optimization(v_max, v_min, value):
@@ -41,54 +53,29 @@ def show(image):
     editor.waitKey(0)
 
 
-# Returns the number of times each value apears on image.
-def countValues(image_path1):
-    """Count the pixels per RGB value."""
-    image1 = editor.imread(str(image_path1), 0)
-    histogram = [0] * 256
-    # histogram[255]
-    i = 0
-    extreme_values[0] = image1[0][0]
-    extreme_values[1] = image1[0][0]
-    while i < len(image1):
-        j = 0
-        while j < len(image1):
-            value = int(image1[i][j])
-            histogram[value] = histogram[value] + 1
-            is_extreme(value)
-            j = j + 1
-        i = i + 1
-    return histogram
+def apply(raw_image):
+    """Appy the process of equalization of histogram."""
+    image = np.array(raw_image)
 
+    histogram = calc_histogram(image)
 
-def equalization(image_path1):
-    """Equalizes the histogram."""
-    countValues(image_path1)
-    image1 = editor.imread(str(image_path1), 0)
-    i = 0
-    while i < len(image1):
-        j = 0
-        while j < len(image1):
-            value = int(image1[i][j])
-            image1[i][j] = int(optimization(extreme_values[1],
-                                            extreme_values[0],
-                                            value))
-            j = j + 1
-        i = i + 1
-    return image1
+    acumulated_hist = accumulate(histogram)
+
+    equalized_hist = equalize_hist(acumulated_hist, image)
+
+    # rebuilding the image by the equalized histogram
+    for row in range(image.shape[0]):
+        for column in range(image.shape[1]):
+            image[row, column] = equalized_hist[image[row, column]]
+    return image
 
 
 def main():
     """Execute the main function."""
-    # his = countValues('images/teste.png')
-    # img = convert(editor.imread('images/teste.png', 0))
-    img = editor.imread('images/teste.png')
-    image = hist.histeq(img)
-    show(image)
-
-    # print_array(his)
-    # print(extreme_values)
-    # show(equalization('images/sapo.png'))
+    img = editor.imread("images/sapo.png", editor.IMREAD_GRAYSCALE)
+    print(img)
+    processed_image = apply(img)
+    show(processed_image)
 
 
 main()
